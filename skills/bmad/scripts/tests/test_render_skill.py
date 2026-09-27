@@ -592,7 +592,7 @@ class RenderSkillTests(unittest.TestCase):
             with self.subTest(name):
                 ws = self._workspace()
                 skill = self._skill(ws, name)
-                workflow = rs.render(ws.project, skill)
+                workflow = rs.render(ws.project, skill, assignments=["workflow.review=thorough"])
                 snap = self._assert_rendered(workflow, ws.project, name)
                 self.assertIn("{plan_file}", _markdown(snap))
                 hunter = snap / "review-prompts" / "edge-case-hunter.md"
@@ -757,6 +757,8 @@ class RenderSkillTests(unittest.TestCase):
         (ws.bmad / "custom" / f"{skill.name}.toml").write_text(
             "\n".join(
                 [
+                    "[workflow]",
+                    'review = "thorough"',
                     "[[workflow.thorough_lenses]]",
                     'id = "blind-hunter"',
                     'name = "Replacement"',
@@ -773,7 +775,7 @@ class RenderSkillTests(unittest.TestCase):
         self.assertIn("Run replacement review.", review)
 
         defaults = tomllib.loads((skill / "customize.toml").read_text(encoding="utf-8"))
-        disabled = "\n".join(
+        disabled = '[workflow]\nreview = "thorough"\n' + "\n".join(
             f'[[workflow.thorough_lenses]]\nid = "{layer["id"]}"\nname = "disabled"\ninstruction = ""\n'
             for layer in defaults["workflow"]["thorough_lenses"]
         )
